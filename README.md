@@ -1,6 +1,8 @@
-# Agentic AI with LangGraph
+# Agentic AI with LangGraph and MCP Server
 
-This project is a Python application for an agentic AI using LangGraph. It includes an API that takes a user's intent and identifies the actual intent. The application also includes a weather tool that uses an open API to get weather forecasts based on user requests. The agent can take a city name as input and will use a geocoding service to find the coordinates.
+This project is a Python application for an agentic AI using LangGraph. It includes an API that takes a user's intent and identifies the actual intent. The application is split into two services: an `agent` service and a `mcp_server` service.
+
+The `agent` service contains the LangGraph agent and the API that interacts with the user. The `mcp_server` service handles all external API calls, including geocoding and weather forecasting. The agent communicates with the `mcp_server` to get the data it needs.
 
 ## Getting Started
 
@@ -28,7 +30,7 @@ These instructions will get you a copy of the project up and running on your loc
    OPENAI_API_KEY=your-api-key
    ```
 
-3. **Build the Docker image**
+3. **Build the Docker images**
 
    ```bash
    docker-compose build
@@ -40,11 +42,11 @@ These instructions will get you a copy of the project up and running on your loc
    docker-compose up
    ```
 
-The API will be running at `http://localhost:8000`.
+The `agent` service will be running at `http://localhost:8000`, and the `mcp_server` service will be running at `http://localhost:8001`.
 
 ## Usage
 
-You can interact with the API by sending a POST request to the `/invoke` endpoint. The request body should be a JSON object with an `intent` key.
+You can interact with the API by sending a POST request to the `/invoke` endpoint on the `agent` service. The request body should be a JSON object with an `intent` key.
 
 ### Example
 
@@ -60,3 +62,4 @@ This will return a JSON object with the weather forecast for Berlin.
 * [FastAPI](https://fastapi.tiangolo.com/) - The web framework used to build the API
 * [Docker](https://www.docker.com/) - The containerization platform used to run the application
 * [Nominatim](https://nominatim.openstreetmap.org/) - The geocoding service used to convert city names to coordinates
+* [Open-Meteo](https://open-meteo.com/) - The weather service used to get weather forecasts
