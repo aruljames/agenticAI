@@ -1,11 +1,11 @@
 
 import os
+import requests
 from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
 from langchain.tools import tool
 from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolNode
-from typing import TypedDict, Annotated, List, Union
+from typing import TypedDict, Annotated, List
 import operator
 from langchain_core.agents import AgentAction, AgentFinish
 from langchain_core.messages import BaseMessage
@@ -17,21 +17,25 @@ load_dotenv()
 class AgentState(TypedDict):
     messages: Annotated[List[BaseMessage], operator.add]
 
+MCP_SERVER_URL = "http://mcp_server:8001"
+
 @tool
 def get_weather_forecast(latitude: float, longitude: float) -> dict:
     """
-    Fetches the weather forecast for a given latitude and longitude.
+    Fetches the weather forecast for a given latitude and longitude from the MCP server.
     """
-    from tools.weather import get_weather_forecast as fetch_weather
-    return fetch_weather(latitude, longitude)
+    response = requests.post(f"{MCP_SERVER_URL}/weather", json={"latitude": latitude, "longitude": longitude})
+    response.raise_for_status()
+    return response.json()
 
 @tool
 def get_coordinates(city_name: str) -> dict:
     """
-    Fetches the latitude and longitude for a given city name.
+    Fetches the latitude and longitude for a given city name from the MCP server.
     """
-    from tools.geocoding import get_coordinates as fetch_coordinates
-    return fetch_coordinates(city_name)
+    response = requests.post(f"{MCP_SERVER_URL}/geocode", json={"city_name": city_name})
+    response.raise_for_status()
+    return response.json()
 
 # Define the agent model
 llm = ChatOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -42,8 +46,11 @@ llm_with_tools = llm.bind_tools(tools)
 def agent_node(state):
     response = llm_with_tools.invoke(state["messages"])
     if not isinstance(response.tool_calls, list) or not response.tool_calls:
+        # If there are no tool calls, we return an AgentFinish object with the response content.
         return {"messages": [AgentFinish(return_values={"output": response.content}, log=response.content)]}
-    action = AgentAction(tool=response.tool_calls[0]['name'], tool_input=response.tool_calls[0]['args'], log=str(response.tool_calls))
+    # Otherwise, we create an AgentAction object for the first tool call.
+    tool_call = response.tool_calls[0]
+    action = AgentAction(tool=tool_call['name'], tool_input=tool_call['args'], log=str(tool_call))
     return {"messages": [action]}
 
 # Define the graph
@@ -71,7 +78,18 @@ def create_agent_graph():
 
 if __name__ == "__main__":
     from langchain_core.messages import HumanMessage
-    app = create_agent_graph().compile()
-    inputs = [HumanMessage(content="what is the weather in berlin?")]
-    result = app.invoke({"messages": inputs})
-    print(result)
+    # This part is for local testing and will not work without the MCP server running.
+    # To test, you would need to run the MCP server first.
+    print("This script is intended to be run as part of the Docker Compose setup.")
+    print("To test the agent, run the entire application with 'docker-compose up'.")
+
+    # The following code is for demonstration purposes and will likely fail if run directly
+    # without the MCP server being accessible.
+    try:
+        app = create_agent_graph().compile()
+        inputs = [HumanMessage(content="what is the weather in berlin?")]
+        result = app.invoke({"messages": inputs})
+        print(result)
+    except Exception as e:
+        print(f"Encountered an error during local testing: {e}")
+        print("This is expected if the MCP server is not running and accessible.")
