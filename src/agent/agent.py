@@ -1,7 +1,7 @@
 
 import os
 import requests
-from langchain_openai import ChatOpenAI
+from langchain_community.chat_models import ChatOpenRouter
 from langchain.tools import tool
 from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolNode
@@ -38,7 +38,7 @@ def get_coordinates(city_name: str) -> dict:
     return response.json()
 
 # Define the agent model
-llm = ChatOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+llm = ChatOpenRouter(openrouter_api_key=os.getenv("OPENROUTER_API_KEY"))
 tools = [get_weather_forecast, get_coordinates]
 llm_with_tools = llm.bind_tools(tools)
 

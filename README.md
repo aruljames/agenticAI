@@ -12,7 +12,7 @@ These instructions will get you a copy of the project up and running on your loc
 
 * Docker
 * Docker Compose
-* An OpenAI API key
+* An OpenRouter API key
 
 ### Installing
 
@@ -24,10 +24,10 @@ These instructions will get you a copy of the project up and running on your loc
 
 2. **Create a `.env` file**
 
-   Create a `.env` file in the root of the project and add your OpenAI API key to it:
+   Create a `.env` file in the root of the project and add your OpenRouter API key to it:
 
    ```
-   OPENAI_API_KEY=your-api-key
+   OPENROUTER_API_KEY=your-api-key
    ```
 
 3. **Build the Docker images**
@@ -61,5 +61,6 @@ This will return a JSON object with the weather forecast for Berlin.
 * [LangGraph](https://github.com/langchain-ai/langgraph) - The framework used to build the agentic AI
 * [FastAPI](https://fastapi.tiangolo.com/) - The web framework used to build the API
 * [Docker](https://www.docker.com/) - The containerization platform used to run the application
+* [OpenRouter](https://openrouter.ai/) - The AI model router used by the agent
 * [Nominatim](https://nominatim.openstreetmap.org/) - The geocoding service used to convert city names to coordinates
 * [Open-Meteo](https://open-meteo.com/) - The weather service used to get weather forecasts
