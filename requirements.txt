@@ -1,7 +1,8 @@
 requests
-langchain
-langgraph
-fastapi
-uvicorn
-python-dotenv
-langchain-openrouter
+langchain==0.1.20
+langgraph==0.0.48
+fastapi==0.110.0
+uvicorn==0.29.0
+python-dotenv==1.0.1
+langchain-openrouter==0.0.3
+langchain-core==0.1.52
