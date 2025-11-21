@@ -1,7 +1,6 @@
-
 from fastapi import FastAPI
 from pydantic import BaseModel
-from src.agent.agent import create_agent_graph
+from src.agent import create_agent_graph
 from langchain_core.messages import HumanMessage
 
 app = FastAPI()
@@ -14,7 +13,7 @@ class UserRequest(BaseModel):
 async def invoke(request: UserRequest):
     inputs = [HumanMessage(content=request.intent)]
     result = agent.invoke({"messages": inputs})
-    return {"response": result['messages'][-1].return_values['output']}
+    return {"response": result['messages'][-1].content}
 
 if __name__ == "__main__":
     import uvicorn
