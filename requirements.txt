@@ -1,0 +1,7 @@
+requests
+langchain
+langgraph
+fastapi
+uvicorn
+python-dotenv
+langchain-openrouter
