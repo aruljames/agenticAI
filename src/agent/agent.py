@@ -1,7 +1,7 @@
 
 import os
 import requests
-from src.agent.openrouter import ChatOpenRouter
+from langchain_openrouter import ChatOpenRouter
 from langchain.tools import tool
 from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolNode

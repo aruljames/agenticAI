@@ -61,6 +61,6 @@ This will return a JSON object with the weather forecast for Berlin.
 * [LangGraph](https://github.com/langchain-ai/langgraph) - The framework used to build the agentic AI
 * [FastAPI](https://fastapi.tiangolo.com/) - The web framework used to build the API
 * [Docker](https://www.docker.com/) - The containerization platform used to run the application
-* [OpenRouter](https://openrouter.ai/) - The AI model router used by the agent
+* [OpenRouter](https://openrouter.ai/) - The AI model router used by the agent, via the `langchain-openrouter` package
 * [Nominatim](https://nominatim.openstreetmap.org/) - The geocoding service used to convert city names to coordinates
 * [Open-Meteo](https://open-meteo.com/) - The weather service used to get weather forecasts
