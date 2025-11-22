@@ -1,29 +1,31 @@
-version: '3.8'
 services:
   agent:
     build:
       context: ./agent
       dockerfile: Dockerfile
+    container_name: toon-agent
     ports:
       - "8000:8000"
-    env_file:
-      - .env
     environment:
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      OPENROUTER_API_KEY: "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"
+      MODEL_NAME: "x-ai/grok-4.1-fast:free"
+      MCP_SERVER_URL: "http://mcp_server:9000"
+      MCP_API_KEY: "supersecretmcpapikey"
+    volumes:
+      - ./data:/app/data
     depends_on:
       - mcp_server
-    networks:
-      - agent-net
 
   mcp_server:
     build:
       context: ./mcp_server
       dockerfile: Dockerfile
+    container_name: mcp-server
     ports:
-      - "8001:8001"
-    networks:
-      - agent-net
-
-networks:
-  agent-net:
-    driver: bridge
+      - "9000:9000"
+    environment:
+      MCP_API_KEY: "supersecretmcpapikey"
+      WEATHER_API_KEY: "${WEATHER_API_KEY}"
+      SQLITE_DB_PATH: "/data/agent_tools.db"
+    volumes:
+      - ./data:/data

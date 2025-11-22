@@ -1,66 +1,264 @@
-# Agentic AI with LangGraph and MCP Server
+🚀 FastAPI + LangGraph + OpenRouter Agent
 
-This project is a Python application for an agentic AI using LangGraph. It includes an API that takes a user's intent and identifies the actual intent. The application is split into two services: an `agent` service and a `mcp_server` service.
+This project provides an LLM-powered API using FastAPI, LangChain / LangGraph, and OpenRouter.
+It includes:
 
-The `agent` service contains the LangGraph agent and the API that interacts with the user. The `mcp_server` service handles all external API calls, including geocoding and weather forecasting. The agent communicates with the `mcp_server` to get the data it needs.
+✅ Multi-step agent workflow
+✅ Prompt transformation (“toon format”)
+✅ Streaming support
+✅ Docker + Docker Compose setup
+✅ Clean modular Python structure
 
-## Getting Started
+📁 Project Structure
+project/
+│── src/
+│   ├── agent.py
+│   ├── graph.py
+│   ├── utils.py
+│   └── __init__.py
+│── main.py
+│── requirements.txt
+│── docker-compose.yml
+│── Dockerfile
+│── README.md
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+⚙️ Prerequisites
 
-### Prerequisites
+Make sure you have:
 
-* Docker
-* Docker Compose
-* An OpenRouter API key
+Docker installed
 
-### Installing
+Docker Compose installed
 
-1. **Clone the repository**
+An OpenRouter API Key → https://openrouter.ai/settings/keys
 
-   ```bash
-   git clone <repository-url>
-   ```
+🔧 1. Configure Environment Variables
 
-2. **Create a `.env` file**
+Edit docker-compose.yml and set:
 
-   Create a `.env` file in the root of the project and add your OpenRouter API key to it:
+environment:
+  - OPENROUTER_API_KEY=your_key_here
+  - MODEL_NAME=openrouter/model-name
 
-   ```
-   OPENROUTER_API_KEY=your-api-key
-   ```
 
-3. **Build the Docker images**
+Example:
 
-   ```bash
-   docker-compose build
-   ```
+environment:
+  - OPENROUTER_API_KEY=sk-or-v1-xxxxx
+  - MODEL_NAME=openai/gpt-4.1
 
-4. **Run the application**
+🐳 2. Build & Run the Application
 
-   ```bash
-   docker-compose up
-   ```
+From the project root, run:
 
-The `agent` service will be running at `http://localhost:8000`, and the `mcp_server` service will be running at `http://localhost:8001`.
+docker-compose up --build
 
-## Usage
 
-You can interact with the API by sending a POST request to the `/invoke` endpoint on the `agent` service. The request body should be a JSON object with an `intent` key.
+The API will start at:
 
-### Example
+👉 http://localhost:8000
 
-```bash
-curl -X POST -H "Content-Type: application/json" -d '{"intent": "What is the weather in Berlin?"}' http://localhost:8000/invoke
-```
+Check docs:
 
-This will return a JSON object with the weather forecast for Berlin.
+👉 http://localhost:8000/docs
 
-## Built With
+🧪 3. How to Test the API
+▶️ Using cURL
+curl -X POST "http://localhost:8000/generate" \
+    -H "Content-Type: application/json" \
+    -d '{"prompt": "Tell me about space"}'
 
-* [LangGraph](https://github.com/langchain-ai/langgraph) - The framework used to build the agentic AI
-* [FastAPI](https://fastapi.tiangolo.com/) - The web framework used to build the API
-* [Docker](https://www.docker.com/) - The containerization platform used to run the application
-* [OpenRouter](https://openrouter.ai/) - The AI model router used by the agent, via the `langchain-openrouter` package
-* [Nominatim](https://nominatim.openstreetmap.org/) - The geocoding service used to convert city names to coordinates
-* [Open-Meteo](https://open-meteo.com/) - The weather service used to get weather forecasts
+▶️ Using Python
+import requests
+
+res = requests.post(
+    "http://localhost:8000/generate",
+    json={"prompt": "convert me to cartoon format"}
+)
+print(res.json())
+
+▶️ Using Browser / Swagger UI
+
+Visit:
+
+👉 http://localhost:8000/docs
+
+Use the POST /generate endpoint.
+
+🧠 4. How the Agent Works
+When you call the API:
+
+The input prompt is converted to toon-format
+
+The agent processes it using LangGraph
+
+The graph performs multi-step reasoning
+
+The agent sends the request to OpenRouter
+
+You receive LLM-generated output
+
+🔁 5. Streaming Support (If Enabled)
+
+Call:
+
+curl -N -X POST "http://localhost:8000/stream" \
+    -H "Content-Type: application/json" \
+    -d '{"prompt": "hello"}'
+
+
+You'll receive live streaming chunks.
+
+🐞 6. Debugging Tips
+
+Check logs:
+
+docker-compose logs -f
+
+
+Restart API:
+
+docker-compose restart
+
+
+Rebuild everything:
+
+docker-compose down
+docker-compose up --build
+
+📝 7. Requirements File
+
+Install locally (optional):
+
+pip install -r requirements.txt
+
+
+
+🧠 Agent Memory (agent_memory.json)
+
+This project uses persistent agent memory to help the LLM remember previous interactions across requests.
+The memory file is stored locally as:
+
+/data/agent_memory.json
+
+✅ What is stored in agent_memory.json?
+
+This JSON file stores:
+
+Recent conversation history
+
+Agent internal state across graph steps
+
+Summaries used for long-term memory
+
+Key/value memory entries generated by the agent
+
+Example:
+
+{
+  "history": [
+    {
+      "user": "Convert this text to cartoon format",
+      "agent": "Sure! Here's the toon version…"
+    }
+  ],
+  "summary": "The user frequently asks for toon-format transformations."
+}
+
+🔍 Why Do We Need This File?
+
+LLMs by default do not remember anything between requests.
+
+Using persistent memory allows the agent to:
+
+Maintain conversation continuity
+
+Personalize responses
+
+Improve long-running multi-step workflows
+
+Allow LangGraph nodes to store internal state
+
+This makes the agent behave more like a real assistant, not a stateless API.
+
+📁 Where Is It Located?
+
+Inside the Docker container:
+
+/app/data/agent_memory.json
+
+
+On your machine (mapped by docker-compose):
+
+./data/agent_memory.json
+
+
+The file is automatically created if missing.
+
+🔄 How to Reset Agent Memory
+
+If something feels “stuck” or you want a fresh agent:
+
+Method 1: Delete the file
+
+Just remove:
+
+rm -f data/agent_memory.json
+
+
+It will be recreated automatically.
+
+Method 2: Clear memory via endpoint
+
+(If implemented — optional)
+
+POST /reset-memory
+
+🎛 Memory Configuration
+
+Memory logic is located inside:
+
+src/agent.py
+src/utils.py
+
+
+You can customize:
+
+How many messages to keep
+
+Whether to store summaries or all messages
+
+What structure is persisted
+
+Example (configurable):
+
+MEMORY_FILE = "data/agent_memory.json"
+MAX_HISTORY = 20
+
+🧪 Testing Memory Behavior
+
+Call /generate twice with related prompts
+
+Observe that the second response references the first input
+
+Delete agent_memory.json → Test again
+
+Now agent resets and behaves stateless
+
+🛠 Troubleshooting
+Memory not updating?
+
+Check write permissions to data/
+
+Ensure Docker volume is mounted correctly
+
+File missing?
+
+The application auto-creates it on first run.
+
+Memory growing too large?
+
+Set limits in memory handler:
+
+if len(memory["history"]) > MAX_HISTORY:
+    memory["history"].pop(0)
