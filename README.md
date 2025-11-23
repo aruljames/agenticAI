@@ -1,264 +1,94 @@
-🚀 FastAPI + LangGraph + OpenRouter Agent
+# FastAPI + LangGraph + OpenRouter Agent (Docker Compose)
 
-This project provides an LLM-powered API using FastAPI, LangChain / LangGraph, and OpenRouter.
-It includes:
+## Setup
+1. Copy repository files into a folder.
+2. Edit `agent/.env.example` and `mcp_server/.env.example` -> rename to `.env` if you want, or set env vars in your environment.
 
-✅ Multi-step agent workflow
-✅ Prompt transformation (“toon format”)
-✅ Streaming support
-✅ Docker + Docker Compose setup
-✅ Clean modular Python structure
+Required env vars:
+- `agent/OPENROUTER_API_KEY` — **required** (OpenRouter API key)
+- optionally `MCP_URL` and `MONGO_URI` if you change defaults.
 
-📁 Project Structure
-project/
-│── src/
-│   ├── agent.py
-│   ├── graph.py
-│   ├── utils.py
-│   └── __init__.py
-│── main.py
-│── requirements.txt
-│── docker-compose.yml
-│── Dockerfile
-│── README.md
+## Run with Docker Compose
+```bash
+docker compose up --build
 
-⚙️ Prerequisites
 
-Make sure you have:
+Agent API: http://localhost:8000
 
-Docker installed
+POST /api/query { "query": "...", "session_id": optional }
 
-Docker Compose installed
+MCP Server: http://localhost:8001
 
-An OpenRouter API Key → https://openrouter.ai/settings/keys
+GET /tools
 
-🔧 1. Configure Environment Variables
+GET /tool/duckduckgo?q=...
 
-Edit docker-compose.yml and set:
+GET /tool/weather?location=London
 
-environment:
-  - OPENROUTER_API_KEY=your_key_here
-  - MODEL_NAME=openrouter/model-name
+Example usage
 
+Ask for weather:
 
-Example:
+curl -s -X POST "http://localhost:8000/api/query" -H "Content-Type: application/json" -d '{"query":"What is the weather in London tomorrow?"}'
 
-environment:
-  - OPENROUTER_API_KEY=sk-or-v1-xxxxx
-  - MODEL_NAME=openai/gpt-4.1
 
-🐳 2. Build & Run the Application
+If agent finds weather_forecast tool and extracts location=London it will call MCP and return structured JSON. If parameters are missing, it will return status: need_params and session_id to continue.
 
-From the project root, run:
+Continue session (supplying missing param):
 
-docker-compose up --build
+curl -s -X POST "http://localhost:8000/api/query" -H "Content-Type: application/json" -d '{"query":"London", "session_id":"<session_id>"}'
 
+Implementation caveats
 
-The API will start at:
+The wrapper uses the OpenRouter chat completions endpoint shape; adjust model name or endpoint depending on your OpenRouter plan.
 
-👉 http://localhost:8000
+LangGraph usage is encapsulated in langgraph_workflow.py. If you want explicit LangGraph node/edge definitions, I can convert this wrapper into a fully node-based LangGraph graph.
 
-Check docs:
+Error handling is minimal — extend per your needs.
 
-👉 http://localhost:8000/docs
 
-🧪 3. How to Test the API
-▶️ Using cURL
-curl -X POST "http://localhost:8000/generate" \
-    -H "Content-Type: application/json" \
-    -d '{"prompt": "Tell me about space"}'
+---
 
-▶️ Using Python
-import requests
+# 6) Important operational details & required env vars
 
-res = requests.post(
-    "http://localhost:8000/generate",
-    json={"prompt": "convert me to cartoon format"}
-)
-print(res.json())
+- `OPENROUTER_API_KEY` — **required** (agent). Place in `agent/.env` or pass in Docker-compose envs.
+- `MCP_URL` — defaults to `http://mcp_server:8001`, fine inside compose.
+- `MONGO_URI` — defaults to `mongodb://mongo:27017`.
 
-▶️ Using Browser / Swagger UI
+---
 
-Visit:
+# 7) What I didn't do (and why / how to extend)
+- I implemented a workflow wrapper rather than a literal LangGraph node-edge graph. This is intentional: it's easier to run and reason about, and it fits your "multiple level workflow with conditional edges" requirement — the wrapper contains those conditionals. If you want the same logic translated into formal LangGraph nodes/edges (using its DSL), I can convert it; this will require the exact LangGraph API version you'll run.
+- I used the DuckDuckGo Instant Answer API and Open-Meteo (both free). If you prefer different providers, change MCP endpoints.
+- Security: production-ready code should add rate-limiting, authentication, and secrets management.
 
-👉 http://localhost:8000/docs
+---
 
-Use the POST /generate endpoint.
+# 8) Ready-to-go small checklist to run
 
-🧠 4. How the Agent Works
-When you call the API:
+1. Create `.env` files:
+- `agent/.env`:
 
-The input prompt is converted to toon-format
 
-The agent processes it using LangGraph
+OPENROUTER_API_KEY=sk-...
+MCP_URL=http://mcp_server:8001
+MONGO_URI=mongodb://mongo:27017
 
-The graph performs multi-step reasoning
+- `mcp_server/.env` (optional)
 
-The agent sends the request to OpenRouter
+2. From repo root:
+```bash
+docker compose up --build
 
-You receive LLM-generated output
 
-🔁 5. Streaming Support (If Enabled)
+Test MCP:
 
-Call:
+curl "http://localhost:8001/tools"
+curl "http://localhost:8001/tool/duckduckgo?q=python+fastapi"
+curl "http://localhost:8001/tool/weather?location=New%20Delhi"
 
-curl -N -X POST "http://localhost:8000/stream" \
-    -H "Content-Type: application/json" \
-    -d '{"prompt": "hello"}'
 
+Test Agent:
 
-You'll receive live streaming chunks.
+curl -X POST "http://localhost:8000/api/query" -H "Content-Type: application/json" -d '{"query":"Show me weather in New Delhi"}'
 
-🐞 6. Debugging Tips
-
-Check logs:
-
-docker-compose logs -f
-
-
-Restart API:
-
-docker-compose restart
-
-
-Rebuild everything:
-
-docker-compose down
-docker-compose up --build
-
-📝 7. Requirements File
-
-Install locally (optional):
-
-pip install -r requirements.txt
-
-
-
-🧠 Agent Memory (agent_memory.json)
-
-This project uses persistent agent memory to help the LLM remember previous interactions across requests.
-The memory file is stored locally as:
-
-/data/agent_memory.json
-
-✅ What is stored in agent_memory.json?
-
-This JSON file stores:
-
-Recent conversation history
-
-Agent internal state across graph steps
-
-Summaries used for long-term memory
-
-Key/value memory entries generated by the agent
-
-Example:
-
-{
-  "history": [
-    {
-      "user": "Convert this text to cartoon format",
-      "agent": "Sure! Here's the toon version…"
-    }
-  ],
-  "summary": "The user frequently asks for toon-format transformations."
-}
-
-🔍 Why Do We Need This File?
-
-LLMs by default do not remember anything between requests.
-
-Using persistent memory allows the agent to:
-
-Maintain conversation continuity
-
-Personalize responses
-
-Improve long-running multi-step workflows
-
-Allow LangGraph nodes to store internal state
-
-This makes the agent behave more like a real assistant, not a stateless API.
-
-📁 Where Is It Located?
-
-Inside the Docker container:
-
-/app/data/agent_memory.json
-
-
-On your machine (mapped by docker-compose):
-
-./data/agent_memory.json
-
-
-The file is automatically created if missing.
-
-🔄 How to Reset Agent Memory
-
-If something feels “stuck” or you want a fresh agent:
-
-Method 1: Delete the file
-
-Just remove:
-
-rm -f data/agent_memory.json
-
-
-It will be recreated automatically.
-
-Method 2: Clear memory via endpoint
-
-(If implemented — optional)
-
-POST /reset-memory
-
-🎛 Memory Configuration
-
-Memory logic is located inside:
-
-src/agent.py
-src/utils.py
-
-
-You can customize:
-
-How many messages to keep
-
-Whether to store summaries or all messages
-
-What structure is persisted
-
-Example (configurable):
-
-MEMORY_FILE = "data/agent_memory.json"
-MAX_HISTORY = 20
-
-🧪 Testing Memory Behavior
-
-Call /generate twice with related prompts
-
-Observe that the second response references the first input
-
-Delete agent_memory.json → Test again
-
-Now agent resets and behaves stateless
-
-🛠 Troubleshooting
-Memory not updating?
-
-Check write permissions to data/
-
-Ensure Docker volume is mounted correctly
-
-File missing?
-
-The application auto-creates it on first run.
-
-Memory growing too large?
-
-Set limits in memory handler:
-
-if len(memory["history"]) > MAX_HISTORY:
-    memory["history"].pop(0)

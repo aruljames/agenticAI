@@ -1,31 +1,37 @@
+version: "3.9"
+
 services:
+
   agent:
-    build:
-      context: ./agent
-      dockerfile: Dockerfile
-    container_name: toon-agent
+    build: ./agent
+    container_name: agent_service
+    restart: always
+    environment:
+      - MODEL_NAME=x-ai/grok-4.1-fast:free
+      - OPENROUTER_API_KEY=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
+      - OPENROUTER_API_URL=https://openrouter.ai/api/v1/chat/completions
+      - MCP_SERVER_URL=http://mcp_server:8001
+      - MONGO_URI=mongodb://mongo:27017
     ports:
       - "8000:8000"
-    environment:
-      OPENROUTER_API_KEY: "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"
-      MODEL_NAME: "x-ai/grok-4.1-fast:free"
-      MCP_SERVER_URL: "http://mcp_server:9000"
-      MCP_API_KEY: "supersecretmcpapikey"
-    volumes:
-      - ./data:/app/data
     depends_on:
       - mcp_server
+      - mongo
 
   mcp_server:
-    build:
-      context: ./mcp_server
-      dockerfile: Dockerfile
-    container_name: mcp-server
+    build: ./mcp_server
+    container_name: mcp_server
+    restart: always
     ports:
-      - "9000:9000"
+      - "8001:8001"
     environment:
-      MCP_API_KEY: "supersecretmcpapikey"
-      WEATHER_API_KEY: "${WEATHER_API_KEY}"
-      SQLITE_DB_PATH: "/data/agent_tools.db"
+      - WEATHER_API_KEY=${WEATHER_API_KEY}
+
+  mongo:
+    image: mongo:6
+    container_name: mongo
+    restart: always
+    ports:
+      - "27017:27017"
     volumes:
-      - ./data:/data
+      - ./mongo-data:/data/db
