@@ -47,7 +47,7 @@ async def decide_intent(state: AgentState):
     {tools}
 
     Decide:
-    - intent
+    - intent (name of the tool)
     - relevant_tool
     - required_parameters
     - missing_parameters
@@ -96,17 +96,17 @@ async def maybe_call_tool(state: AgentState):
         return state.model_copy(update={
             "needs_more_input": True
         })
-
+    print("##### 1")
     # No tool selected?
     if not analysis.get("relevant_tool"):
         return state.model_copy(update={"tool_result": None})
-
+    print("##### 2")
     # Call the tool
     tool_name = analysis["relevant_tool"]
     params = analysis["required_parameters"]
-
+    print("##### 3")
     tool_output = await call_tool(tool_name, params)
-
+    print("##### 4")
     return state.model_copy(update={"tool_result": tool_output})
 
 
@@ -115,7 +115,7 @@ async def maybe_call_tool(state: AgentState):
 # -----------------------------
 async def generate_final_response(state: AgentState):
     query = state.query
-
+    print("##### 5")
     # Ask for missing parameters
     if state.needs_more_input:
         missing = state.analysis.get("missing_parameters")
@@ -125,9 +125,10 @@ async def generate_final_response(state: AgentState):
                 "missing": missing
             }
         })
-
+    print("##### 6")
     # Tool generated output
     if state.tool_result:
+        print("##### 7")
         prompt = f"""
         User query: {query}
         Tool output: {state.tool_result}
@@ -135,10 +136,14 @@ async def generate_final_response(state: AgentState):
         """
 
         response = await llm(prompt)
+        print("##### 8", response)
+        if isinstance(response, str):
+            response = json.loads(response)
         return state.model_copy(update={"final": response})
-
+    print("##### 9")
     # Fallback: direct answer
     llm_response = await llm(query)
+    print("##### 10")
     return state.model_copy(update={"final": llm_response})
 
 
@@ -164,11 +169,39 @@ graph = builder.compile(checkpointer=MemorySaver())
 # Run the Workflow
 # -----------------------------
 async def run_user_query(user_query: str, session_id: str):
-    initial_state = AgentState(query=user_query)
+    previous_state = session_id
+    if previous_state and previous_state.get("intent"):
+        state = AgentState(**previous_state)
+
+        # User is providing missing parameters
+        if state.analysis and state.analysis.get("missing_parameters"):
+            missing = state.analysis["missing_parameters"]
+
+            # Inject new user input into collected_params
+            state.collected_params = state.collected_params or {}
+
+            # Very simple parser: user_query = "city = Chennai"
+            key, value = [x.strip() for x in user_query.split("=", 1)]
+            if key in missing:
+                state.collected_params[key] = value
+                state.analysis["missing_parameters"].remove(key)
+
+            # If now all params collected → go call tool
+            if not state.analysis["missing_parameters"]:
+                state.needs_more_input = False
+
+        graph_input = state
+    else:
+        # First API call
+        graph_input = AgentState(query=user_query)
 
     result = await graph.ainvoke(
-        initial_state.model_dump(),
+        graph_input.model_dump(),
         config={"configurable": {"thread_id": session_id}}
     )
 
-    return result
+    # 3️⃣ Save updated state in MongoDB
+    update_session(previous_state.get("session_id"), result)
+    # 4️⃣ Return final response
+    print("###### result ====>", result)
+    return result.get("final")

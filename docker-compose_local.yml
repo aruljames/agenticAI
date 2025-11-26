@@ -7,7 +7,7 @@ services:
     restart: always
     environment:
       - MODEL_NAME=x-ai/grok-4.1-fast:free
-      - OPENROUTER_API_KEY=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
+      - OPENROUTER_API_KEY=......................................
       - OPENROUTER_API_URL=https://openrouter.ai/api/v1/chat/completions
       - MCP_SERVER_URL=http://mcp_server:8001
       - MONGO_URI=mongodb://mongo:27017

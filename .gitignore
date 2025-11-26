@@ -5,6 +5,7 @@ __pycache__/
 
 # C extensions
 *.so
+docker-compose.yml
 
 # Distribution / packaging
 .Python
@@ -144,6 +145,8 @@ ENV/
 env.bak/
 venv.bak/
 mongo-data/
+postgres-data/
+clickhouse-data/
 
 # Spyder project settings
 .spyderproject

@@ -6,3 +6,4 @@ uvicorn
 pydantic
 pymongo
 requests
+langfuse<=2.30.0

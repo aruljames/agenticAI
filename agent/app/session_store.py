@@ -6,7 +6,6 @@ db = mongo["agent_db"]
 sessions = db["sessions"]
 
 def get_or_create_session(session_id: str):
-    print("####### MONGO_URI ====> ", os.getenv("MONGO_URI"))
     session = sessions.find_one({"session_id": session_id})
     if session:
         return session
@@ -17,6 +16,7 @@ def get_or_create_session(session_id: str):
         "tool": None,
         "required_params": [],
         "collected_params": {},
+        "missing_parameters": [],
         "history": []
     }
     sessions.insert_one(new)
