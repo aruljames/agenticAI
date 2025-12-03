@@ -67,11 +67,12 @@ async def decide_intent(state: AgentState):
     print("######### prompt =======> ", prompt)
 
     raw_output = await llm(prompt)
-    print("######### LLM raw_output =======> ", raw_output)
-
-    try:
+    if isinstance(raw_output, dict):
+        parsed = raw_output
+    else:
         parsed = json.loads(raw_output)
-    except:
+        
+    if not parsed:
         # If LLM returns garbage, fallback
         parsed = {
             "intent": None,

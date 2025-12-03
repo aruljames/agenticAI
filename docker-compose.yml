@@ -6,14 +6,15 @@ services:
     container_name: agent_service
     restart: always
     environment:
-      - MODEL_NAME=x-ai/grok-4.1-fast:free
-      - OPENROUTER_API_KEY=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
-      - OPENROUTER_API_URL=https://openrouter.ai/api/v1/chat/completions
+      - MODEL_NAME=gemma3
+      # - OPENROUTER_API_KEY=12345
+      # - OPENROUTER_API_URL=https://openrouter.ai/api/v1/chat/completions
       - MCP_SERVER_URL=http://mcp_server:8001
       - MONGO_URI=mongodb://mongo:27017
-      - LANGFUSE_PUBLIC_KEY=pk-lf-a08e41e8-7218-4d1c-bb81-c9a309d270da
-      - LANGFUSE_SECRET_KEY=sk-lf-8780ad0a-e189-4244-a0f1-b4d0d749bfd7
+      - LANGFUSE_PUBLIC_KEY=pk-lf-88a8041e-05a2-4546-a638-874e64d6b6ce
+      - LANGFUSE_SECRET_KEY=sk-lf-e3f03d8f-c51b-40a8-8d64-9096e65c7771
       - LANGFUSE_HOST=http://langfuse-server:3000
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
     ports:
       - "8000:8000"
     depends_on:
@@ -78,31 +79,6 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
-
-  # langfuse-server:
-  #   image: langfuse/langfuse:latest
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   ports:
-  #     - "3000:3000"
-  #   env_file:
-  #     - .env
-  #   environment:
-  #     - DATABASE_PORT=5432
-  #     - DATABASE_USERNAME=langfuse
-  #     - DATABASE_PASSWORD=langfuse
-  #     - DATABASE_NAME=langfuse
-  #     - DATABASE_HOST=postgres
-  #     - NEXTAUTH_SECRET=secret
-  #     - SALT=salt
-  #     - NEXTAUTH_URL=http://localhost:3000
-  #     - TELEMETRY_ENABLED=false
-  #     - LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES=false
-  #     - CLICKHOUSE_URL=tcp://clickhouse:9000
-  #     - CLICKHOUSE_MIGRATION_URL=clickhouse://default:@clickhouse:9000/langfuse
-  #     - CLICKHOUSE_USER=default
-  #     - CLICKHOUSE_PASSWORD=default
 
   langfuse-server:
     image: langfuse/langfuse:2
